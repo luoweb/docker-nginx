@@ -87,7 +87,7 @@ jobs:
           #指定用户/仓库名
           build-args: |
             NGINX_FROM_IMAGE=nginx:1.25.2
-            ENABLED_MODULES=ndk lua nginx_upstream_check_module
+            ENABLED_MODULES=ndk lua lua-nginx-module nginx_upstream_check_module
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
