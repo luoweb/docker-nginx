@@ -6,10 +6,10 @@ name: Build Images
 # documentation.
 
 on:
-  schedule:
-    - cron: '0 3 * * *'
+  # schedule:
+  #   - cron: '0 3 * * *'
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
 
 env:
   # Use docker.io for Docker Hub if empty
