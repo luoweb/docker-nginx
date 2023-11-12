@@ -21,6 +21,10 @@ env:
   IMAGE_NAME: luoweb/docker-nginx
   TZ: Asia/Shanghai
 
+  # tell nginx's build system where to find LuaJIT 2.1:
+  LUAJIT_LIB: /usr/lib
+  LUAJIT_INC: /usr/include/nginx-luajit-2.1
+
 jobs:
   build:
     runs-on: ubuntu-latest
