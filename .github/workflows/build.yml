@@ -109,7 +109,7 @@ jobs:
           DOCKER_ORG: registry.cn-hangzhou.aliyuncs.com/roweb
         run: |
           docker images
-          docker run --rm -it ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.date.outputs.date }} nginx -V
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.date.outputs.date }} nginx -V
           
       # - name: Build and push Docker Hub2
       #   id: build-and-push2
