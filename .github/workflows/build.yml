@@ -36,6 +36,11 @@ jobs:
       id-token: write
 
     steps:
+      
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y%m%d')"
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -91,12 +96,21 @@ jobs:
           #指定用户/仓库名
           build-args: |
             NGINX_FROM_IMAGE=nginx:1.25.2
-            ENABLED_MODULES=ndk lua lua-nginx-module nginx_upstream_check_module
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ENABLED_MODULES=lua lua-nginx-module nginx_upstream_check_module
+          # ENABLED_MODULES=ndk lua lua-nginx-module nginx_upstream_check_module
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.date.outputs.date }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build Check
+        shell: bash
+        env:
+          DOCKER_ORG: registry.cn-hangzhou.aliyuncs.com/roweb
+        run: |
+          docker images
+          docker run --rm -it ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.date.outputs.date }} nginx -V
+          
       # - name: Build and push Docker Hub2
       #   id: build-and-push2
       #   #导入这个模块来完成自动编译和推送
