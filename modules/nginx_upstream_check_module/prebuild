@@ -20,5 +20,6 @@ echo "No prebuild stage required - all dependencies are satisfied already!"
 
 # 添加模块
 # ./configure --user=nginx --group=nginx --with-http_ssl_module --with-http_stub_status_module --prefix=/modules/ --add-module=./nginx_upstream_check_module-master
+./configure --user=nginx --group=nginx --without-http_v3_module
 
 exit 0
