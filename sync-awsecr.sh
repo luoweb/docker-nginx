@@ -6,8 +6,8 @@ registry="public.ecr.aws/z9d2n7e1"
 
 declare -A aliases
 aliases=(
-	[mainline]='1 1.25 latest'
-	[stable]='1.24'
+	[mainline]='1 1.27 latest'
+	[stable]='1.26'
 )
 
 architectures=( amd64 arm64v8 )
@@ -71,12 +71,17 @@ for version in "${versions[@]}"; do
 	fi
 	versionAliases+=( ${aliases[$version]:-} )
 
-    for tag in ${versionAliases[@]:1}; do
+	debianVersion="$(git show "$commit":"$version/$base/Dockerfile" | awk -F"[-:]" '$1 == "FROM debian" { print $2; exit }')"
+	debianAliases=( ${versionAliases[@]/%/-$debianVersion} )
+	debianAliases=( "${debianAliases[@]//latest-/}" )
+
+    for tag in ${versionAliases[@]:1} ${debianAliases[@]:1}; do
         taglist["$image:$tag"]="$image:$fullVersion"
     done
 
 	for variant in debian-perl; do
 		variantAliases=( "${versionAliases[@]/%/-perl}" )
+        variantAliases+=( "${versionAliases[@]/%/-${variant/debian/$debianVersion}}" )
 		variantAliases=( "${variantAliases[@]//latest-/}" )
 
         for tag in ${variantAliases[@]}; do
@@ -86,10 +91,13 @@ for version in "${versions[@]}"; do
         done
 	done
 
+    alpineVersion="$(git show "$commit":"$version/alpine-slim/Dockerfile" | awk -F: '$1 == "FROM alpine" { print $2; exit }')"
+
 	for variant in alpine alpine-perl alpine-slim; do
 		commit="$(dirCommit "$version/$variant")"
 
 		variantAliases=( "${versionAliases[@]/%/-$variant}" )
+		variantAliases+=( "${versionAliases[@]/%/-${variant/alpine/alpine$alpineVersion}}" )
 		variantAliases=( "${variantAliases[@]//latest-/}" )
 
         for tag in ${variantAliases[@]}; do
@@ -108,8 +116,16 @@ echo "export DOCKER_CLI_EXPERIMENTAL=enabled"
 echo
 echo "# pulling stuff"
 for arch in ${architectures[@]}; do
+    case $arch in
+        arm64v8)
+            parch="aarch64"
+            ;;
+        *)
+            parch=$arch
+            ;;
+    esac
 for tag in ${pulllist[@]}; do
-    echo "docker pull $arch/$tag";
+    echo "docker pull --platform linux/$parch $arch/$tag";
 done
 done
 

@@ -3,17 +3,17 @@ FROM ${NGINX_FROM_IMAGE} as builder
 
 ARG ENABLED_MODULES
 
-RUN set -ex \
-    && if [ "$ENABLED_MODULES" = "" ]; then \
+SHELL ["/bin/bash", "-exo", "pipefail", "-c"]
+
+RUN if [ "$ENABLED_MODULES" = "" ]; then \
         echo "No additional modules enabled, exiting"; \
         exit 1; \
     fi
 
 COPY ./ /modules/
 
-RUN set -ex \
-    && apt update \
-    && apt install -y --no-install-suggests --no-install-recommends \
+RUN apt-get update \
+    && apt-get install -y --no-install-suggests --no-install-recommends \
                 patch make wget mercurial devscripts debhelper dpkg-dev \
                 quilt lsb-release build-essential libxml2-utils xsltproc \
                 equivs git g++ libparse-recdescent-perl \
@@ -42,7 +42,7 @@ RUN set -ex \
             # some modules require build dependencies
             if [ -f /modules/$module/build-deps ]; then \
                 echo "Installing $module build dependencies"; \
-                apt update && apt install -y --no-install-suggests --no-install-recommends $(cat /modules/$module/build-deps | xargs); \
+                apt-get update && apt-get install -y --no-install-suggests --no-install-recommends $(cat /modules/$module/build-deps | xargs); \
             fi; \
             # if a module has a build dependency that is not in a distro, provide a
             # shell script to fetch/build/install those
@@ -70,12 +70,10 @@ RUN set -ex \
     && echo "BUILT_MODULES=\"$BUILT_MODULES\"" > /tmp/packages/modules.env
 
 FROM ${NGINX_FROM_IMAGE}
-COPY --from=builder /tmp/packages /tmp/packages
-RUN set -ex \
-    && apt update \
+RUN --mount=type=bind,target=/tmp/packages/,source=/tmp/packages/,from=builder \
+    apt-get update \
     && . /tmp/packages/modules.env \
     && for module in $BUILT_MODULES; do \
-           apt install --no-install-suggests --no-install-recommends -y /tmp/packages/nginx-module-${module}_${NGINX_VERSION}*.deb; \
+           apt-get install --no-install-suggests --no-install-recommends -y /tmp/packages/nginx-module-${module}_${NGINX_VERSION}*.deb; \
        done \
-    && rm -rf /tmp/packages \
     && rm -rf /var/lib/apt/lists/

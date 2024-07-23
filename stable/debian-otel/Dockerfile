@@ -1,20 +1,33 @@
-FROM nginx:%%NGINX_VERSION%%
+#
+# NOTE: THIS DOCKERFILE IS GENERATED VIA "update.sh"
+#
+# PLEASE DO NOT EDIT IT DIRECTLY.
+#
+FROM nginx:1.26.1
+
+ENV OTEL_VERSION     0.1.0
 
 RUN set -x; \
     NGINX_GPGKEY_PATH=/etc/apt/keyrings/nginx-archive-keyring.gpg; \
     dpkgArch="$(dpkg --print-architecture)" \
-    && nginxPackages="%%PACKAGES%%
+    && nginxPackages=" \
+        nginx=${NGINX_VERSION}-${PKG_RELEASE} \
+        nginx-module-xslt=${NGINX_VERSION}-${PKG_RELEASE} \
+        nginx-module-geoip=${NGINX_VERSION}-${PKG_RELEASE} \
+        nginx-module-image-filter=${NGINX_VERSION}-${PKG_RELEASE} \
+        nginx-module-njs=${NGINX_VERSION}+${NJS_VERSION}-${NJS_RELEASE} \
+        nginx-module-otel=${NGINX_VERSION}+${OTEL_VERSION}-${PKG_RELEASE} \
     " \
     && case "$dpkgArch" in \
         amd64|arm64) \
 # arches officialy built by upstream
-            echo "deb [signed-by=$NGINX_GPGKEY_PATH] %%PACKAGEREPO%% %%DEBIAN_VERSION%% nginx" >> /etc/apt/sources.list.d/nginx.list \
+            echo "deb [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/debian/ bookworm nginx" >> /etc/apt/sources.list.d/nginx.list \
             && apt-get update \
             ;; \
         *) \
 # we're on an architecture upstream doesn't officially build for
 # let's build binaries from the published source packages
-            echo "deb-src [signed-by=$NGINX_GPGKEY_PATH] %%PACKAGEREPO%% %%DEBIAN_VERSION%% nginx" >> /etc/apt/sources.list.d/nginx.list \
+            echo "deb-src [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/debian/ bookworm nginx" >> /etc/apt/sources.list.d/nginx.list \
             \
 # new directory for storing sources and .deb files
             && tempDir="$(mktemp -d)" \
@@ -26,11 +39,11 @@ RUN set -x; \
             \
 # build .deb files from upstream's source packages (which are verified by apt-get)
             && apt-get update \
-            && apt-get build-dep -y %%BUILDTARGET%% \
+            && apt-get build-dep -y nginx-module-otel \
             && ( \
                 cd "$tempDir" \
                 && DEB_BUILD_OPTIONS="nocheck parallel=$(nproc)" \
-                    apt-get source --compile %%BUILDTARGET%% \
+                    apt-get source --compile nginx-module-otel \
             ) \
 # we don't remove APT lists here because they get re-downloaded and removed later
             \
