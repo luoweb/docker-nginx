@@ -95,9 +95,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           #指定用户/仓库名
           build-args: |
-            NGINX_FROM_IMAGE=nginx:1.25.2
-            ENABLED_MODULES=lua lua-nginx-module nginx_upstream_check_module
-          # ENABLED_MODULES=ndk lua lua-nginx-module nginx_upstream_check_module
+            NGINX_FROM_IMAGE=nginx:1.27.0
+            ENABLED_MODULES=ndk lua lua-nginx-module nginx_upstream_check_module
+          # ENABLED_MODULES=lua lua-nginx-module nginx_upstream_check_module
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.date.outputs.date }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
